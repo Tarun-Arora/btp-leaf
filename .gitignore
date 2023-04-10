@@ -1,3 +1,5 @@
 vcpkg/*
 .idea/*
 build
+tempCodeRunnerFile.cpp
+.vscode/*
