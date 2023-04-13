@@ -3,21 +3,29 @@
 using namespace std;
 using namespace seal;
 
-void print_decrypted_value(Decryptor &decryptor, Ciphertext &rs_or_encrypted)
+string return_decrypted_value(Decryptor &decryptor, Ciphertext rs_or_encrypted)
 {
     Plaintext rs_or_plain;
     decryptor.decrypt(rs_or_encrypted, rs_or_plain);
-    cout << rs_or_plain.to_string() << "\n";
+    return rs_or_plain.to_string();
+}
+
+Ciphertext return_flip_ciphertext(Evaluator &evaluator, Ciphertext &val)
+{
+    Ciphertext temp = val;
+    evaluator.negate_inplace(temp);
+    evaluator.add_plain_inplace(temp, Plaintext("1"));
+    return temp;
 }
 
 void test_func()
 {
     EncryptionParameters parms(scheme_type::bfv);
 
-    size_t poly_modulus_degree = 4096;
+    size_t poly_modulus_degree = 8192*2;
     parms.set_poly_modulus_degree(poly_modulus_degree);
-    parms.set_coeff_modulus(CoeffModulus::BFVDefault(poly_modulus_degree));
-    parms.set_plain_modulus(40961);
+    parms.set_coeff_modulus(CoeffModulus::Create(poly_modulus_degree, { 60, 50, 50, 60, 60 }));
+    parms.set_plain_modulus(2);
     SEALContext context(parms);
 
     // if (chain_size < 2) {
@@ -39,7 +47,7 @@ void test_func()
     Encryptor encryptor(context, public_key);
     Evaluator evaluator(context);
     Decryptor decryptor(context, secret_key);
-    BatchEncoder encoder(context);
+    // BatchEncoder encoder(context);
 
     size_t array_size = 16;
     size_t subarray_size = 4;
@@ -64,9 +72,7 @@ void test_func()
         for (int j = 0; j < array_size; j++)
         {
             r[i][j] = rand() % 2;
-            // cout << r[i][j] << " ";
         }
-        // cout << "\n";
     }
 
     Ciphertext zero;
@@ -76,11 +82,12 @@ void test_func()
     Ciphertext ciphertext1;
     encryptor.encrypt(plaintext1, ciphertext1);
     
-    vector<Ciphertext> p(N, zero);
+    vector<Ciphertext> p;
     Ciphertext prod, temp_ct;
     vector<Ciphertext> localized_rsor(no_of_subarrays);
-    for (int subarray_no = 0; subarray_no < subarray_size; subarray_no++)
+    for (int subarray_no = 0; subarray_no < no_of_subarrays; subarray_no++)
     {
+        p = vector<Ciphertext> (N, zero);
         for (int j = 0; j < N; j++)
         {
             for (int index_in_subarray = 0; index_in_subarray < subarray_size; index_in_subarray++)
@@ -93,7 +100,7 @@ void test_func()
                 if (r[j][i] != 0)
                     evaluator.multiply_plain(encrypted_data[i], temp, prod);
 
-                evaluator.add(p[j], prod, p[j]);
+                evaluator.add_inplace(p[j], prod);
 
                 // TODO: SOMEHOW CARRY OUT p[j]%2 or p[j]&1
                 // print_decrypted_value(decryptor, p[j]);
@@ -106,18 +113,32 @@ void test_func()
         }
         // At this step, for this prefix of this subarray 
         // we would have p[0] to p[N-1], so RS-OR would be 1-product of complement of all p
-        evaluator.negate(p[0], temp_ct);
-        evaluator.add_plain_inplace(temp_ct, ciphertext1);
-        prod = temp_ct;
+        prod = return_flip_ciphertext(evaluator, p[0]);
+        // cout<<p[0].size()<<" test\n";
+        // evaluator.negate(p[0], temp_ct);
+
+        // for(int i=0;i<4;i++)cout<<return_decrypted_value(decryptor, p[i])<<" ";
+        // cout<<"\n"<<N<<"\n";
+        // for(int i=0;i<4;i++)cout<<return_decrypted_value(decryptor, return_flip_ciphertext(evaluator, p[i]))<<" ";
+        // cout<<"\n"<<N<<"\n";
+        // cout<<"\n";
+
+        // evaluator.add_plain_inplace(temp_ct, plaintext1);
+        // prod = temp_ct;
         for(int i=1; i < N; i++){
-            evaluator.negate(p[i], temp_ct);
-            evaluator.add_plain_inplace(temp_ct, ciphertext1);
-            evaluator.multiply_inplace(prod, temp_ct);
+            // evaluator.negate(p[i], temp_ct);
+            // evaluator.add_plain_inplace(temp_ct, plaintext1);
+            // cout<< "Before multiply: " << return_decrypted_value(decryptor, prod)<<"\n";
+            // cout<< "Before multiply: " << return_decrypted_value(decryptor, return_flip_ciphertext(evaluator, p[i]))<<"\n";
+            // evaluator.relinearize_inplace(temp_ct, relin_keys);
+            evaluator.multiply_inplace(prod, return_flip_ciphertext(evaluator, p[i]));
+            evaluator.relinearize_inplace(prod, relin_keys);
+            // evaluator.relinearize_inplace(prod, relin_keys);
         }
 
-        evaluator.negate_inplace(prod);
-        evaluator.add_plain_inplace(prod, ciphertext1);
-        localized_rsor[subarray_no] = prod;
+        // evaluator.negate_inplace(prod);
+        // evaluator.add_plain_inplace(prod, plaintext1);
+        localized_rsor[subarray_no] = return_flip_ciphertext(evaluator, prod);
     }
 
     vector<Ciphertext> localized_rsor_copy(localized_rsor);
@@ -133,11 +154,29 @@ void test_func()
         evaluator.multiply_inplace(shield[i], encrypted_data[i]);
     }
 
-    vector<Ciphertext> fin(subarray_size, zero)
+    vector<Ciphertext> fin(subarray_size, zero);
     for(int i = 0; i < subarray_size; i++){
         for(int j = 0; j < no_of_subarrays; j++){
             evaluator.add_inplace(fin[i], shield[i + j * subarray_size]);
         }
     }
+    
+    for(int i = 1; i < subarray_size; i++){
+        evaluator.multiply(fin[i], fin[i-1], temp_ct);
+        evaluator.negate_inplace(temp_ct);
+        evaluator.add_inplace(fin[i], fin[i-1]);
+        evaluator.add_inplace(fin[i], temp_ct);
+    }
 
+    for(int i = subarray_size - 1; i > 0; i--){
+        temp_ct = fin[i - 1];
+        evaluator.negate_inplace(temp_ct);
+        evaluator.add_inplace(fin[i], temp_ct);
+    }
+
+    vector<Ciphertext> ex_v(array_size);
+    for(int i = 0; i < array_size; i++){
+        ex_v[i] = fin[i % subarray_size];
+        evaluator.multiply_inplace(ex_v[i], shield[i]);
+    }
 }
