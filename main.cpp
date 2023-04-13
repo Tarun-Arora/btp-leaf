@@ -179,4 +179,15 @@ void test_func()
         ex_v[i] = fin[i % subarray_size];
         evaluator.multiply_inplace(ex_v[i], shield[i]);
     }
+
+    Ciphertext output = zero; 
+    size_t k = ceil(log2(array_size));
+
+    for(int i = 0; i < k; i++) {
+        temp_ct = zero;
+        for(int j = 1; j <= array_size; j++) {
+            cout << (j >> i) % 2 << " ";
+        }
+        cout<<"\n";
+    }
 }
