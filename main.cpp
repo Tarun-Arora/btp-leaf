@@ -180,14 +180,25 @@ void test_func()
         evaluator.multiply_inplace(ex_v[i], shield[i]);
     }
 
-    Ciphertext output = zero; 
-    size_t k = ceil(log2(array_size));
+    Ciphertext temp_ct1 = zero; 
+    size_t k = ceil(log2(array_size + 1));
+    int output = 0; 
+    int temp_int;
+    Plaintext temp_plain;
 
+    parms.set_plain_modulus(40961);
+    context = SEALContext(parms);
     for(int i = 0; i < k; i++) {
         temp_ct = zero;
         for(int j = 1; j <= array_size; j++) {
-            cout << (j >> i) % 2 << " ";
+            temp_int = (j >> (k - i - 1)) % 2;
+            if (temp_int){
+                evaluator.multiply_plain(ex_v[j-1], Plaintext(to_string(temp_int)), temp_ct1);
+                evaluator.add_inplace(temp_ct, temp_ct1);
+            }
         }
-        cout<<"\n";
+        decryptor.decrypt(temp_ct, temp_plain);
+        output = 2 * output + (temp_plain.to_string() == "1");
     }
+    cout<< output;
 }
