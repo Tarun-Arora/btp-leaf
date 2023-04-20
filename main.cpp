@@ -107,43 +107,16 @@ void leaf_example()
                     evaluator.multiply_plain(encrypted_data[i], temp, prod);
 
                 evaluator.add_inplace(p[j], prod);
-
-                // TODO: SOMEHOW CARRY OUT p[j]%2 or p[j]&1
-                // print_decrypted_value(decryptor, p[j]);
-                // Plaintext plaintext1("1");
-                // // Ciphertext ciphertext1;
-                // // encryptor.encrypt(plaintext1, ciphertext1);
-                // evaluator.multiply_plain_inplace(p[j], plaintext1);
-                // print_decrypted_value(decryptor, p[j]);
             }
         }
         // At this step, for this prefix of this subarray 
         // we would have p[0] to p[N-1], so RS-OR would be 1-product of complement of all p
         prod = return_flip_ciphertext(evaluator, p[0]);
-        // cout<<p[0].size()<<" test\n";
-        // evaluator.negate(p[0], temp_ct);
-
-        // for(int i=0;i<4;i++)cout<<return_decrypted_value(decryptor, p[i])<<" ";
-        // cout<<"\n"<<N<<"\n";
-        // for(int i=0;i<4;i++)cout<<return_decrypted_value(decryptor, return_flip_ciphertext(evaluator, p[i]))<<" ";
-        // cout<<"\n"<<N<<"\n";
-        // cout<<"\n";
-
-        // evaluator.add_plain_inplace(temp_ct, plaintext1);
-        // prod = temp_ct;
         for(int i=1; i < N; i++){
-            // evaluator.negate(p[i], temp_ct);
-            // evaluator.add_plain_inplace(temp_ct, plaintext1);
-            // cout<< "Before multiply: " << return_decrypted_value(decryptor, prod)<<"\n";
-            // cout<< "Before multiply: " << return_decrypted_value(decryptor, return_flip_ciphertext(evaluator, p[i]))<<"\n";
-            // evaluator.relinearize_inplace(temp_ct, relin_keys);
             evaluator.multiply_inplace(prod, return_flip_ciphertext(evaluator, p[i]));
             evaluator.relinearize_inplace(prod, relin_keys);
-            // evaluator.relinearize_inplace(prod, relin_keys);
         }
 
-        // evaluator.negate_inplace(prod);
-        // evaluator.add_plain_inplace(prod, plaintext1);
         localized_rsor[subarray_no] = return_flip_ciphertext(evaluator, prod);
     }
 
