@@ -20,7 +20,7 @@
 #include <thread>
 #include <vector>
 
-void test_func();
+void leaf_example();
 
 /*
 Helper function: Prints the name of the example in a fancy banner.

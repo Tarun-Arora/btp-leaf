@@ -1,4 +1,4 @@
-#include "examples.h"
+#include "helper.h"
 
 using namespace std;
 using namespace seal;
@@ -18,7 +18,7 @@ Ciphertext return_flip_ciphertext(Evaluator &evaluator, Ciphertext &val)
     return temp;
 }
 
-void test_func()
+void leaf_example()
 {
     EncryptionParameters parms(scheme_type::bfv);
 
@@ -53,6 +53,12 @@ void test_func()
     size_t subarray_size = 4;
     size_t no_of_subarrays = array_size / subarray_size;
     vector<uint64_t> v = {0, 0, 0, 0, 0, 1, 0, 1, 0, 1, 0, 0, 0, 0, 1, 0};
+    
+    cout << "Input Array: ";
+    for(auto i: v) cout << i <<" ";
+    cout << "\n\n";
+
+    cout << "Started LEAF Algorithm\n";
 
     // Encrypt the input data
     vector<Ciphertext> encrypted_data(array_size);
@@ -200,5 +206,6 @@ void test_func()
         decryptor.decrypt(temp_ct, temp_plain);
         output = 2 * output + (temp_plain.to_string() == "1");
     }
-    cout<< output;
+    cout << "Position of first '1' in the input array: ";
+    cout << output << "\n";
 }

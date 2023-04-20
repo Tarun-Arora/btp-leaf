@@ -20,7 +20,7 @@ if(SEAL_BUILD_EXAMPLES)
 
     target_sources(sealexamples
         PRIVATE
-            ${CMAKE_CURRENT_LIST_DIR}/examples.cpp
+            ${CMAKE_CURRENT_LIST_DIR}/helper.cpp
             ${CMAKE_CURRENT_LIST_DIR}/main.cpp
     )
 
