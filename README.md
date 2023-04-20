@@ -1,5 +1,8 @@
-g++ main.cpp
+## LEAF Secure Search Algorithm
 
-MICROSOFT SEAL
-
-1. BFV Basics
+1. Implemented using Microsoft LEAF
+2. Dependencies: Make sure microsoft LEAF is installed.
+3. Command to run the code:
+    ```bash
+    cmake --build build && ./build/bin/leaf
+    ```

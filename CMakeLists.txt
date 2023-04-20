@@ -3,7 +3,7 @@
 
 cmake_minimum_required(VERSION 3.13)
 
-project(SEALExamples VERSION 4.1.1 LANGUAGES CXX)
+project(LEAF VERSION 4.1.1 LANGUAGES CXX)
 
 # If not called from root CMakeLists.txt
 if(NOT DEFINED SEAL_BUILD_EXAMPLES)
@@ -16,18 +16,18 @@ if(NOT DEFINED SEAL_BUILD_EXAMPLES)
 endif()
 
 if(SEAL_BUILD_EXAMPLES)
-    add_executable(sealexamples)
+    add_executable(leaf)
 
-    target_sources(sealexamples
+    target_sources(leaf
         PRIVATE
             ${CMAKE_CURRENT_LIST_DIR}/helper.cpp
             ${CMAKE_CURRENT_LIST_DIR}/main.cpp
     )
 
     if(TARGET SEAL::seal)
-        target_link_libraries(sealexamples PRIVATE SEAL::seal)
+        target_link_libraries(leaf PRIVATE SEAL::seal)
     elseif(TARGET SEAL::seal_shared)
-        target_link_libraries(sealexamples PRIVATE SEAL::seal_shared)
+        target_link_libraries(leaf PRIVATE SEAL::seal_shared)
     else()
         message(FATAL_ERROR "Cannot find target SEAL::seal or SEAL::seal_shared")
     endif()
